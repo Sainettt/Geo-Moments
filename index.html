@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4a90e2">
+    <title>GeoMoments PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="brand">GeoMoments</div>
+        <div class="nav-links">
+            <button onclick="router('home')" class="nav-btn active" data-target="home">Galeria</button>
+            <button onclick="router('add')" class="nav-btn" data-target="add">Dodaj</button>
+            <button onclick="router('about')" class="nav-btn" data-target="about">Info</button>
+        </div>
+    </nav>
+
+    <div id="offline-banner" class="hidden">Jesteś teraz offline 📡</div>
+
+    <main>
+        <section id="home" class="view active-view">
+            <h2>Twoje Momenty</h2>
+            <div id="moments-list" class="grid-container">
+                <p class="empty-state">Brak zapisanych momentów. Dodaj pierwszy!</p>
+            </div>
+        </section>
+
+        <section id="add" class="view hidden-view">
+            <h2>Nowy Moment</h2>
+            <div class="form-container">
+                
+                <div class="input-group">
+                    <label>1. Zrób zdjęcie</label>
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment">
+                    <div id="preview-area"></div>
+                </div>
+
+                <div class="input-group">
+                    <label>2. Lokalizacja</label>
+                    <button id="geoBtn" class="action-btn">📍 Pobierz lokalizację</button>
+                    <p id="geoStatus" class="status-text">Lokalizacja nieznana</p>
+                </div>
+
+                <div class="input-group">
+                    <label>3. Opis</label>
+                    <input type="text" id="descInput" placeholder="Np. Rynek w Krakowie">
+                </div>
+
+                <button id="saveBtn" class="primary-btn" disabled>Zapisz Moment</button>
+            </div>
+        </section>
+
+        <section id="about" class="view hidden-view">
+            <h2>O Aplikacji</h2>
+            <div class="card">
+                <p><strong>GeoMoments</strong> to aplikacja PWA do zapisywania wspomnień wraz z lokalizacją.</p>
+                <hr>
+                <h3>Status:</h3>
+                <p>Sieć: <span id="network-status">Online</span></p>
+                <p>Schowek (Cache): Aktywny</p>
+                <hr>
+                <button id="clearData" class="danger-btn">Wyczyść wszystkie dane</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

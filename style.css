@@ -1,0 +1,77 @@
+:root {
+    --primary: #4a90e2;
+    --bg: #f4f7f6;
+    --text: #333;
+    --card-bg: #fff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+
+body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; }
+
+/* Navigation */
+.navbar {
+    background: var(--primary);
+    color: white;
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.nav-links button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    margin-left: 10px;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.nav-links button.active { opacity: 1; font-weight: bold; text-decoration: underline; }
+
+/* Views Management */
+.view { display: none; padding: 20px; animation: fadeIn 0.3s; }
+.active-view { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Offline Banner */
+#offline-banner {
+    background: #444; color: #fff; text-align: center; padding: 5px; font-size: 0.9rem;
+}
+.hidden { display: none; }
+
+/* Grid for Gallery */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Responsywność */
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.card img { width: 100%; height: 200px; object-fit: cover; border-radius: 5px; }
+
+/* Form Elements */
+.input-group { margin-bottom: 20px; }
+.input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+input[type="text"], input[type="file"] { width: 100%; padding: 10px; }
+
+.primary-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 1.1rem; cursor: pointer; }
+.primary-btn:disabled { background: #ccc; }
+.action-btn { padding: 10px; background: #eee; border: 1px solid #ccc; cursor: pointer; }
+.danger-btn { padding: 10px; background: #e74c3c; color: white; border: none; width: 100%; margin-top: 10px; cursor: pointer; }
+
+#preview-area img { max-width: 100%; margin-top: 10px; border-radius: 5px; }
