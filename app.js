@@ -142,7 +142,6 @@ const saveBtn = document.getElementById('saveBtn');
 const descInput = document.getElementById('descInput');
 
 saveBtn.addEventListener('click', () => {
-    alert("Button Pressed!");
     console.log("Próba zapisu...");
 
     if (!currentImageBase64) {
