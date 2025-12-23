@@ -1,4 +1,4 @@
-const CACHE_NAME = 'geo-moments-v3';
+const CACHE_NAME = 'geo-moments-v4';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

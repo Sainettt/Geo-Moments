@@ -16,8 +16,9 @@ const STORAGE_KEY = 'geo_moments_data_v2'; // Zmieniamy klucz, żeby nie kolidow
 
 // helper: Image Resizer
 function resizeImage(file) {
-    const maxWidth = 1024; 
-    const quality = 0.7; 
+    // We reduce the parameters so that it fits into 5MB LocalStorage.
+    const maxWidth = 800;
+    const quality = 0.5;   
 
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -26,16 +27,17 @@ function resizeImage(file) {
             const img = new Image();
             img.src = event.target.result;
             img.onload = () => {
-                
+                // 1. Calculated new sizes
                 let width = img.width;
                 let height = img.height;
                 
+                // Always reduce if greater than maxWidth
                 if (width > maxWidth) {
                     height = Math.round(height * (maxWidth / width));
                     width = maxWidth;
                 }
 
-                // Rysowanie na canvas
+                // 2. Draw in Canvas
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
@@ -43,8 +45,18 @@ function resizeImage(file) {
                 ctx.drawImage(img, 0, 0, width, height);
 
                 const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                console.log(`Zdjęcie zmniejszone. Oryginał: ${file.size}, Po kompresji: ~${Math.round(dataUrl.length * 0.75)} bajtów`);
-                resolve(dataUrl);
+
+                // 4. Check size
+                const sizeInKB = Math.round(dataUrl.length / 1024);
+                console.log(`Размер фото после сжатия: ${sizeInKB} KB`);
+
+                // If the photo is still huge (more than 4MB), compress it again as a last resort.
+                if (sizeInKB > 4000) {
+                     console.warn("Фото все еще огромное! Применяем экстренное сжатие.");
+                     resolve(canvas.toDataURL('image/jpeg', 0.2)); // Экстремальное сжатие
+                } else {
+                     resolve(dataUrl);
+                }
             };
             img.onerror = err => reject(err);
         };
@@ -150,6 +162,14 @@ saveBtn.addEventListener('click', () => {
         desc: descInput.value.trim(),
         date: new Date().toLocaleString('pl-PL')
     };
+
+    const estimatedSize = JSON.stringify(newMoment).length;
+    console.log(`Попытка записать: ${(estimatedSize / 1024).toFixed(2)} KB`);
+    
+    if (estimatedSize > 4500000) {
+        alert("Attention! The photo is too large even after compression. Try taking a photo with fewer details or less lighting.");
+        return; 
+    }
 
     try {
         saveData(newMoment);
