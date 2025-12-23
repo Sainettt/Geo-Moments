@@ -1,4 +1,4 @@
-
+console.log("App loaded");
 // 1. Service Worker Registration
 // Rejestracja Service Workera do działania offline (kr3)
 if ('serviceWorker' in navigator) {
@@ -130,6 +130,7 @@ const saveBtn = document.getElementById('saveBtn');
 const descInput = document.getElementById('descInput');
 
 saveBtn.addEventListener('click', () => {
+    alert("Button Pressed!");
     console.log("Próba zapisu...");
 
     if (!currentImageBase64) {
