@@ -48,11 +48,11 @@ function resizeImage(file) {
 
                 // 4. Check size
                 const sizeInKB = Math.round(dataUrl.length / 1024);
-                console.log(`Размер фото после сжатия: ${sizeInKB} KB`);
+                console.log(`Photo size after compression: ${sizeInKB} KB`);
 
                 // If the photo is still huge (more than 4MB), compress it again as a last resort.
                 if (sizeInKB > 4000) {
-                     console.warn("Фото все еще огромное! Применяем экстренное сжатие.");
+                     console.warn("The photo is still huge! We apply emergency compression.");
                      resolve(canvas.toDataURL('image/jpeg', 0.2)); // Экстремальное сжатие
                 } else {
                      resolve(dataUrl);
@@ -163,7 +163,7 @@ saveBtn.addEventListener('click', () => {
     };
 
     const estimatedSize = JSON.stringify(newMoment).length;
-    console.log(`Попытка записать: ${(estimatedSize / 1024).toFixed(2)} KB`);
+    console.log(`Attempt to record: ${(estimatedSize / 1024).toFixed(2)} KB`);
     
     if (estimatedSize > 4500000) {
         alert("Attention! The photo is too large even after compression. Try taking a photo with fewer details or less lighting.");
