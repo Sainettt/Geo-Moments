@@ -13,6 +13,8 @@ if ('serviceWorker' in navigator) {
 let currentImageBase64 = null;
 let currentGeo = null;
 const STORAGE_KEY = 'geo_moments_data_v2'; // Zmieniamy klucz, żeby nie kolidował starymi danymi
+let mapInstance = null;
+let markers = [];
 
 // helper: Image Resizer
 function resizeImage(file) {
@@ -64,19 +66,71 @@ function resizeImage(file) {
     });
 }
 
+function initMap() {
+
+    if (mapInstance) {
+        setTimeout(() => { mapInstance.invalidateSize(); }, 100);
+        return;
+    }
+
+    mapInstance = L.map('map-container').setView([52.2297, 21.0122], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(mapInstance);
+
+    loadMarkers();
+}
+
+function loadMarkers() {
+
+    markers.forEach(m => mapInstance.removeLayer(m));
+    markers = [];
+
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    data.forEach(item => {
+
+        if (item.geo && item.geo.lat && item.geo.lng) {
+            const marker = L.marker([item.geo.lat, item.geo.lng])
+                .addTo(mapInstance)
+                .bindPopup(`
+                    <b>${escapeHtml(item.desc)}</b><br>
+                    <img src="${item.image}" style="width:100px; margin-top:5px;">
+                    <br><small>${item.date}</small>
+                `);
+            markers.push(marker);
+        }
+    });
+}
+
+function openDetails(id) {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const item = data.find(x => x.id === id);
+    
+    if(confirm(`Delete data "${item.desc}"?`)) {
+        const newData = data.filter(x => x.id !== id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+        renderGallery();
+    }
+}
+
 
 // 3. Navigation Logic
 function router(viewId) {
-    // Hide all views
+    // ... твой старый код скрытия views ...
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active-view'));
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
 
-    // Show target view
     document.getElementById(viewId).classList.add('active-view');
-    document.querySelector(`button[data-target="${viewId}"]`).classList.add('active');
+    const btn = document.querySelector(`button[data-target="${viewId}"]`);
+    if(btn) btn.classList.add('active'); // Проверка if, т.к. кнопки может не быть
 
     if(viewId === 'home') renderGallery();
     if(viewId === 'add') resetForm();
+    
+    // !!! НОВОЕ: Инициализация карты при входе !!!
+    if(viewId === 'map') initMap(); 
 }
 
 // 4. Native Feature: Camera Handling (z kompresją) 
@@ -232,12 +286,14 @@ function renderGallery() {
 
     // Generowanie HTML kart
     list.innerHTML = data.map(item => `
-        <div class="card">
+        <div class="card" onclick="openDetails(${item.id})">
+            
             <img src="${item.image}" alt="Moment" loading="lazy">
             <div class="card-content">
                 <h3>${escapeHtml(item.desc)}</h3>
                 <p class="date"><small>📅 ${item.date}</small></p>
-                ${item.geo ? `<p class="geo-link">📍 <a href="https://www.google.com/maps/search/?api=1&query=${item.geo.lat},${item.geo.lng}" target="_blank" rel="noopener">Zobacz na mapie</a></p>` : ''}
+                
+                ${item.geo ? `<p class="geo-link">📍 <a href="http://googleusercontent.com/maps.google.com/3{item.geo.lat},${item.geo.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Zobacz na mapie</a></p>` : ''}
             </div>
         </div>
     `).join('');
