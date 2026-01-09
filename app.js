@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Configuration IndexedDB
+// Конфигурация IndexedDB
 const DB_NAME = 'GeoMomentsDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'moments';
@@ -17,14 +17,12 @@ let db = null;
 
 // --- 2. Database Helper Functions (IndexedDB) ---
 
-// Opening the database
 function initDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
-            // Создаем хранилище, если его нет. KeyPath 'id' — это наш уникальный ключ
             if (!db.objectStoreNames.contains(STORE_NAME)) {
                 db.createObjectStore(STORE_NAME, { keyPath: 'id' });
             }
@@ -48,7 +46,6 @@ function addMomentToDB(moment) {
         const transaction = db.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const request = store.add(moment);
-
         request.onsuccess = () => resolve();
         request.onerror = (e) => reject(e.target.error);
     });
@@ -56,17 +53,15 @@ function addMomentToDB(moment) {
 
 function getMomentsFromDB() {
     return new Promise((resolve, reject) => {
-        // Если база еще не открылась (редкий случай), пробуем открыть
         if (!db) {
             initDB().then(() => getMomentsFromDB().then(resolve).catch(reject));
             return;
         }
         const transaction = db.transaction([STORE_NAME], 'readonly');
         const store = transaction.objectStore(STORE_NAME);
-        const request = store.getAll(); // Получить всё
+        const request = store.getAll();
 
         request.onsuccess = () => {
-            // Сортируем: новые сверху (reverse order by ID)
             const result = request.result.sort((a, b) => b.id - a.id);
             resolve(result);
         };
@@ -74,25 +69,21 @@ function getMomentsFromDB() {
     });
 }
 
-// Удаление записи (Delete)
 function deleteMomentFromDB(id) {
     return new Promise((resolve, reject) => {
         const transaction = db.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const request = store.delete(id);
-
         request.onsuccess = () => resolve();
         request.onerror = (e) => reject(e.target.error);
     });
 }
 
-// Очистка всей базы
 function clearDB() {
     return new Promise((resolve, reject) => {
         const transaction = db.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const request = store.clear();
-
         request.onsuccess = () => resolve();
         request.onerror = (e) => reject(e.target.error);
     });
@@ -102,14 +93,14 @@ function clearDB() {
 // --- 3. State & Variables ---
 let currentImageBase64 = null;
 let currentGeo = null;
-let currentAudioBase64 = null; // Для аудио (если вы добавили)
+let currentAudioBase64 = null;
 let mapInstance = null;
 let mapMarkers = [];
 
-// --- 4. Image Resizer (Оставляем сжатие, чтобы работало быстрее) ---
+// --- 4. Image Resizer ---
 function resizeImage(file) {
-    const maxWidth = 1024; // Можно увеличить до 1200-1600, т.к. лимита памяти больше нет!
-    const quality = 0.7;   // Можно улучшить качество до 0.7-0.8
+    const maxWidth = 1024;
+    const quality = 0.7;
 
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -139,7 +130,6 @@ function resizeImage(file) {
 }
 
 // --- 5. Navigation Logic ---
-// Router теперь асинхронный, так как renderGallery требует времени на запрос к БД
 async function router(viewId) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active-view'));
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -150,17 +140,16 @@ async function router(viewId) {
     const btn = document.querySelector(`button[data-target="${viewId}"]`);
     if(btn) btn.classList.add('active');
 
-    if(viewId === 'home') await renderGallery(); // Ждем загрузки данных
+    if(viewId === 'home') await renderGallery();
     if(viewId === 'add') resetForm();
-    if(viewId === 'map') await initMap(); // Ждем загрузки карты
+    if(viewId === 'map') await initMap();
 }
 
 // --- 6. Map Logic ---
 async function initMap() {
-    // Ждем, чтобы контейнер стал видимым
     if (mapInstance) {
         setTimeout(() => mapInstance.invalidateSize(), 100);
-        await loadMapMarkers(); // Перезагружаем маркеры из БД
+        await loadMapMarkers();
         return;
     }
 
@@ -179,7 +168,6 @@ async function loadMapMarkers() {
     mapMarkers.forEach(m => mapInstance.removeLayer(m));
     mapMarkers = [];
 
-    // Читаем из IndexedDB
     const data = await getMomentsFromDB();
 
     data.forEach(item => {
@@ -200,7 +188,6 @@ async function loadMapMarkers() {
 async function renderGallery() {
     const list = document.getElementById('moments-list');
     
-    // Читаем из IndexedDB
     let data = [];
     try {
         data = await getMomentsFromDB();
@@ -233,9 +220,9 @@ async function renderGallery() {
 async function openDetails(id) {
     if(confirm("Czy chcesz usunąć ten moment? 🗑️")) {
         try {
-            await deleteMomentFromDB(id); // Удаляем из БД
-            await renderGallery();        // Обновляем вид
-            await loadMapMarkers();       // Обновляем карту
+            await deleteMomentFromDB(id);
+            await renderGallery();
+            await loadMapMarkers();
         } catch(e) {
             alert("Błąd podczas usuwania: " + e);
         }
@@ -275,22 +262,51 @@ geoBtn.addEventListener('click', () => {
     );
 });
 
-// Аудио логика (если добавлена в HTML)
+// --- AUDIO FIX (iOS SUPPORT) ---
 const startRecordBtn = document.getElementById('startRecordBtn');
 const stopRecordBtn = document.getElementById('stopRecordBtn');
 const audioPreview = document.getElementById('audioPreview');
 let mediaRecorder;
 let audioChunks = [];
 
+// Функция для определения поддерживаемого типа аудио
+function getSupportedMimeType() {
+    const types = [
+        'audio/webm', // Android, Chrome, FF
+        'audio/mp4',  // iOS Safari
+        'audio/ogg',
+        'audio/wav'
+    ];
+    for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) {
+            return type;
+        }
+    }
+    return ''; // Браузер выберет дефолтный
+}
+
 if (startRecordBtn) {
     startRecordBtn.addEventListener('click', async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
+            
+            // Определяем формат
+            const mimeType = getSupportedMimeType();
+            const options = mimeType ? { mimeType } : {};
+            
+            console.log("Nagrywanie w formacie:", mimeType); // Для отладки
+
+            mediaRecorder = new MediaRecorder(stream, options);
             audioChunks = [];
-            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+            mediaRecorder.ondataavailable = e => {
+                if(e.data.size > 0) audioChunks.push(e.data);
+            };
+
             mediaRecorder.onstop = () => {
-                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                // Используем тот же формат при создании файла
+                const blob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
+                
                 const reader = new FileReader();
                 reader.readAsDataURL(blob);
                 reader.onloadend = () => {
@@ -301,15 +317,21 @@ if (startRecordBtn) {
                     }
                 };
             };
+
             mediaRecorder.start();
             startRecordBtn.classList.add('hidden');
             stopRecordBtn.classList.remove('hidden');
-            setTimeout(() => { if(mediaRecorder.state==='recording') stopRecordBtn.click(); }, 15000);
-        } catch (e) { alert("Brak mikrofonu"); }
+            
+            setTimeout(() => { if(mediaRecorder && mediaRecorder.state==='recording') stopRecordBtn.click(); }, 15000);
+
+        } catch (e) { 
+            console.error(e);
+            alert("Brak dostępu do mikrofonu lub błąd nagrywania."); 
+        }
     });
 
     stopRecordBtn.addEventListener('click', () => {
-        if(mediaRecorder) { 
+        if(mediaRecorder && mediaRecorder.state === 'recording') { 
             mediaRecorder.stop(); 
             mediaRecorder.stream.getTracks().forEach(t=>t.stop());
         }
@@ -317,8 +339,8 @@ if (startRecordBtn) {
         stopRecordBtn.classList.add('hidden');
     });
 }
+// ------------------------------
 
-// Кнопка сохранения
 const saveBtn = document.getElementById('saveBtn');
 const descInput = document.getElementById('descInput');
 
@@ -339,17 +361,14 @@ saveBtn.addEventListener('click', async () => {
     saveBtn.disabled = true;
 
     try {
-        await addMomentToDB(newMoment); // Сохраняем в IndexedDB
-        
+        await addMomentToDB(newMoment);
         if(navigator.vibrate) navigator.vibrate(200);
         alert("Zapisano! 🎉");
-        
-        // Сброс и переход
         resetForm();
         router('home');
     } catch (error) {
         console.error(error);
-        alert("Błąd zapisu bazy danych: " + error.message);
+        alert("Błąd zapisu: " + error.message);
     } finally {
         saveBtn.innerText = "Zapisz Moment";
         saveBtn.disabled = false;
@@ -371,10 +390,14 @@ function resetForm() {
 }
 
 function escapeHtml(unsafe) {
-    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
 }
 
-// Clear Data
 const clearBtn = document.getElementById('clearData');
 if(clearBtn) {
     clearBtn.addEventListener('click', async () => {
@@ -386,7 +409,6 @@ if(clearBtn) {
     });
 }
 
-// Online Status
 function updateOnlineStatus() {
     const status = navigator.onLine ? "Online 🟢" : "Offline 🔴";
     const el = document.getElementById('network-status');
@@ -398,7 +420,6 @@ window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
 // --- Init App ---
-// Ждем загрузки DOM, потом открываем БД, потом запускаем роутер
 document.addEventListener('DOMContentLoaded', () => {
     updateOnlineStatus();
     initDB()
