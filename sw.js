@@ -1,4 +1,4 @@
-const CACHE_NAME = 'geo-moments-v6'
+const CACHE_NAME = 'geo-moments-v7'
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
