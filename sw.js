@@ -40,7 +40,7 @@ self.addEventListener('activate', (event) => {
 
 // 3. Fetch Event: Take data from cache if we havent connection
 self.addEventListener('fetch', (event) => {
-  // Стратегия: Cache First, falling back to Network
+  // Cache First, falling back to Network
   event.respondWith(
     caches.match(event.request).then((response) => {
       return (
