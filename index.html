@@ -92,6 +92,26 @@
             />
           </div>
 
+          <div class="input-group">
+            <label>4. Notatka głosowa (max 15s)</label>
+            <div class="audio-controls">
+              <button id="startRecordBtn" class="action-btn">🎤 Nagraj</button>
+              <button
+                id="stopRecordBtn"
+                class="action-btn hidden"
+                style="background: #e74c3c; color: white"
+              >
+                ⏹ Stop
+              </button>
+            </div>
+            <audio
+              id="audioPreview"
+              controls
+              class="hidden"
+              style="width: 100%; margin-top: 10px"
+            ></audio>
+          </div>
+
           <button id="saveBtn" class="primary-btn">Zapisz Moment</button>
         </div>
       </section>
