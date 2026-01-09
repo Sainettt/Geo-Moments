@@ -292,7 +292,7 @@ function renderGallery() {
                 <h3>${escapeHtml(item.desc)}</h3>
                 <p class="date"><small>📅 ${item.date}</small></p>
                 
-                ${item.geo ? `<p class="geo-link">📍 <a href="http://googleusercontent.com/maps.google.com/3{item.geo.lat},${item.geo.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Zobacz na mapie</a></p>` : ''}
+                ${item.geo ? `<p class="geo-link">📍 <a href="https://www.google.com/maps?q=${item.geo.lat},${item.geo.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Zobacz na mapie</a></p>` : ''}
             </div>
         </div>
     `).join('');
