@@ -1,13 +1,18 @@
-const CACHE_NAME = 'geo-moments-v11'
+const CACHE_NAME = 'geo-moments-v12'
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
-  './app.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-]
+
+  './js/main.js',
+  './js/db.js',
+  './js/ui.js',
+  './js/map.js',
+  './js/utils.js'
+];
 
 // 1. Install Event: Cache static data
 self.addEventListener('install', (event) => {
