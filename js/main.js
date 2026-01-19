@@ -1,18 +1,18 @@
-
 import { initDB, addMomentToDB, clearDB } from './db.js';
 import { resizeImage, getSupportedMimeType } from './utils.js';
 import { initMap } from './map.js';
 import { renderGallery, updateOnlineStatus } from './ui.js';
 
 // --- State ---
+// Temporary storage for form data before saving
 let currentImageBase64 = null;
 let currentGeo = null;
 let currentAudioBase64 = null;
 
 // --- Service Worker ---
+// Registers the SW to enable Offline capabilities and PWA caching
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        // Путь к sw.js может отличаться, так как main.js в папке js/
         navigator.serviceWorker.register('./sw.js')
             .then(reg => console.log('SW Registered'))
             .catch(err => console.log('SW Failed', err));
@@ -20,6 +20,11 @@ if ('serviceWorker' in navigator) {
 }
 
 // --- Router ---
+/**
+ * Simple Single Page Application (SPA) router.
+ * Toggles 'active-view' classes to show/hide sections without page reloads.
+ * * @param {string} viewId - The ID of the section to show (home, add, map, etc.)
+ */
 async function router(viewId) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active-view'));
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -30,12 +35,14 @@ async function router(viewId) {
     const btn = document.querySelector(`button[data-target="${viewId}"]`);
     if(btn) btn.classList.add('active');
 
+    // Trigger specific logic based on the view
     if(viewId === 'home') await renderGallery();
     if(viewId === 'add') resetForm();
     if(viewId === 'map') await initMap();
 }
 
-// Делаем router глобальным, чтобы работал onclick в HTML
+// NOTE: Expose router to global scope so HTML 'onclick="router()"' attributes work.
+// Modules create their own scope, so this is necessary.
 window.router = router;
 
 // --- Form Logic: Camera & Image ---
@@ -48,6 +55,7 @@ if(cameraInput) {
         if (!file) return;
 
         previewArea.innerHTML = '<p>Przetwarzanie... ⏳</p>';
+        // Compress image immediately to save DB space and improve performance
         resizeImage(file).then(base64 => {
             currentImageBase64 = base64;
             previewArea.innerHTML = `<img src="${currentImageBase64}" alt="Preview">`;
@@ -92,10 +100,12 @@ if (startRecordBtn) {
             mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
             audioChunks = [];
 
+            // Collect audio data chunks as they become available
             mediaRecorder.ondataavailable = e => {
                 if(e.data.size > 0) audioChunks.push(e.data);
             };
 
+            // When recording stops, convert chunks to Blob -> DataURL (Base64)
             mediaRecorder.onstop = () => {
                 const blob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
                 const reader = new FileReader();
@@ -112,6 +122,8 @@ if (startRecordBtn) {
             mediaRecorder.start();
             startRecordBtn.classList.add('hidden');
             stopRecordBtn.classList.remove('hidden');
+            
+            // Auto-stop recording after 15 seconds
             setTimeout(() => { if(mediaRecorder && mediaRecorder.state==='recording') stopRecordBtn.click(); }, 15000);
         } catch (e) { alert("Brak mikrofonu"); }
     });
@@ -119,6 +131,7 @@ if (startRecordBtn) {
     stopRecordBtn.addEventListener('click', () => {
         if(mediaRecorder && mediaRecorder.state === 'recording') { 
             mediaRecorder.stop(); 
+            // Important: Stop all tracks to release the microphone
             mediaRecorder.stream.getTracks().forEach(t=>t.stop());
         }
         startRecordBtn.classList.remove('hidden');
@@ -136,7 +149,7 @@ if(saveBtn) {
         if (!descInput.value.trim()) return alert("Opisz to! 📝");
 
         const newMoment = {
-            id: Date.now(),
+            id: Date.now(), // Uses timestamp as unique ID
             image: currentImageBase64,
             geo: currentGeo,
             audio: currentAudioBase64,
@@ -149,6 +162,7 @@ if(saveBtn) {
 
         try {
             await addMomentToDB(newMoment);
+            // Haptic feedback (vibration) on success
             if(navigator.vibrate) navigator.vibrate(200);
             alert("Zapisano! 🎉");
             resetForm();
@@ -162,6 +176,9 @@ if(saveBtn) {
     });
 }
 
+/**
+ * Resets all temporary state variables and UI elements.
+ */
 function resetForm() {
     currentImageBase64 = null;
     currentGeo = null;
@@ -176,7 +193,6 @@ function resetForm() {
     if(cameraInput) cameraInput.value = '';
 }
 
-// --- System ---
 const clearBtn = document.getElementById('clearData');
 if(clearBtn) {
     clearBtn.addEventListener('click', async () => {
@@ -191,7 +207,6 @@ if(clearBtn) {
 window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
-// Init
 document.addEventListener('DOMContentLoaded', () => {
     updateOnlineStatus();
     initDB().then(() => {

@@ -1,22 +1,27 @@
-
 import { escapeHtml } from './utils.js';
 import { getMomentsFromDB } from './db.js';
 
 let mapInstance = null;
 let mapMarkers = [];
 
+/**
+ * Initializes or refreshes the Leaflet map.
+ */
 export async function initMap() {
 
+    // If map exists, just refresh size and markers.
+    // NOTE: invalidateSize() is crucial here because the map container 
+    // was likely 'display: none' before. Without this, tiles load incorrectly.
     if (mapInstance) {
         setTimeout(() => mapInstance.invalidateSize(), 100);
         await loadMapMarkers();
         return;
     }
 
-    // Check if Leaflet is loaded and map container exists
+    // Safety check: Ensure Leaflet (L) is loaded
     if (typeof L === 'undefined' || !document.getElementById('map-container')) return;
 
-    // Центрируем на Польше (Варшава)
+    // Center on Poland (Warsaw) by default
     mapInstance = L.map('map-container').setView([52.2297, 21.0122], 6);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -26,10 +31,13 @@ export async function initMap() {
     await loadMapMarkers();
 }
 
+/**
+ * Fetches data from DB and places markers on the map.
+ */
 async function loadMapMarkers() {
     if (!mapInstance) return;
     
-    // Clear existing markers
+    // Clear existing markers to prevent duplicates
     mapMarkers.forEach(m => mapInstance.removeLayer(m));
     mapMarkers = [];
 
