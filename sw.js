@@ -70,7 +70,7 @@ self.addEventListener('fetch', event => {
           });
         });
       }).catch(() => {
-        // tutaj automatycznie wstawi sie zdjecie jak nie ma sieci i cache
+        return new Response('', { status: 404, statusText: 'Not Found' });
       })
     );
     return; 
